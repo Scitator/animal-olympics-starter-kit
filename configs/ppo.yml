@@ -1,0 +1,99 @@
+db:
+  db: RedisDB  # RedisDB or MongoDB
+  port: 12012
+  prefix: ppo  # TODO: remove
+
+
+environment:
+  history_len: &history_len 1
+
+
+agents:
+  actor:
+    agent: AnimalActor
+
+    state_net_params:  # state -> hidden representation
+      observation_net_params:
+        in_channels: 3  #  @TODO: take from env
+        history_len: *history_len
+        channels: [32, 64, 32]
+        use_bias: False
+        use_groups: False
+        use_normalization: False
+        use_dropout: False
+        activation: ReLU
+      main_net_params:
+        features: [256]
+        use_bias: False
+        use_normalization: True
+        use_dropout: False
+        activation: ReLU
+    policy_head_params:  # hidden representation -> value
+      in_features: 256  # out features would be taken from action_shape
+      policy_type: categorical
+
+  critic:
+    agent: AnimalStateCritic
+
+    state_net_params:  # state -> hidden representation
+      observation_net_params:
+        in_channels: 3  #  @TODO: take from env
+        history_len: *history_len
+        channels: [32, 64, 32]
+        use_bias: False
+        use_groups: False
+        use_normalization: False
+        use_dropout: False
+        activation: ReLU
+      main_net_params:
+        features: [256]
+        use_bias: False
+        use_normalization: True
+        use_dropout: False
+        activation: ReLU
+    value_head_params:  # hidden representation -> value
+      in_features: 256
+      out_features: 1
+
+
+algorithm:
+  algorithm: PPO
+
+  n_step: 1
+  gamma: 0.99
+
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  entropy_regularization: 0.01
+
+  actor_optimizer_params:
+    optimizer: Adam
+    lr: 0.0003
+  critic_optimizer_params:
+    optimizer: Adam
+    lr: 0.0003
+
+  actor_grad_clip_params:
+    func: clip_grad_norm_
+    max_norm: 0.5
+  critic_grad_clip_params:
+    func: clip_grad_norm_
+    max_norm: 0.5
+
+
+trainer:
+  rollout_batch_size: 256
+  batch_size: 256              # transitions
+  num_workers: 4
+  num_mini_epochs: 10
+  min_num_trajectories: 1000
+  min_num_transitions: 4000
+
+  save_period: 50              # epochs
+  epoch_limit: 10000
+
+
+sampler:
+  exploration_params:
+    - exploration: NoExploration
+      probability: 1.0

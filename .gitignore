@@ -102,3 +102,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Pycharm stuff
+.idea/
+.DS_Store
+assets/AnimalAI*
+logs
